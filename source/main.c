@@ -3,8 +3,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-int cursorX, cursorY;
-
 struct saveFile {
         char fileName[16];
         bool exists;
@@ -51,17 +49,6 @@ void printStatus(struct saveFile saveFiles[], int selected, bool payloadExists) 
     printf("\n");
 }
 
-void saveCursorPos(PrintConsole *console) {
-    cursorX = console->cursorX;
-    cursorY = console->cursorX;
-}
-
-void restoreCursorPos(PrintConsole *console) {
-    console->cursorX = cursorX;
-    console->cursorY = cursorY;
-}
-
-
 int main(int argc, char *argv[]) {
     gfxInitDefault();
     PrintConsole consoleTop;
@@ -96,7 +83,7 @@ start:
             goto end;
     }
     FS_Archive gameArchive;
-    u32 pathData[3] = {MEDIATYPE_SD, tid & 0xFFFFFFFF, 0x00040000};
+    u32 pathData[3] = {MEDIATYPE_GAME_CARD, tid & 0xFFFFFFFF, 0x00040000};
     FS_Path archivePath = {PATH_BINARY, 12, (const void*)pathData};
     Result ret = FSUSER_OpenArchive(&gameArchive, ARCHIVE_USER_SAVEDATA, archivePath);
     if (R_FAILED(ret)) {
@@ -196,6 +183,10 @@ start:
     if (!waitForButton(KEY_A, KEY_B)) {
         FSUSER_CloseArchive(gameArchive);
         goto end;
+    }
+    if (saveFiles[selected-1].fileName[0] == 0) {
+        printf("Save slot doesn't exist, preparing for creation...\n");
+        sprintf(saveFiles[selected-1].fileName, "/save0%d.bin", selected-1);
     }
     if (mode == 2 || mode == 3) {
         FILE *pf;
@@ -352,10 +343,7 @@ start:
         free(buffer);
     }
     else if (mode == 1) {
-        if (saveFiles[selected-1].fileName[0] == 0) {
-            printf("Save file doesn't exist, preparing for creation...\n");
-            sprintf(saveFiles[selected-1].fileName, "/save0%d.bin", selected-1);
-        }
+        
         printf("Restoring...\n");
             Handle srcFile;
             ret = FSUSER_OpenFile(&srcFile, gameArchive, fsMakePath(PATH_ASCII, "/save03.bin"), FS_OPEN_READ | FS_OPEN_WRITE, 0);
