@@ -1,0 +1,5 @@
+.venv/*
+build
+oot3dhax_installer.3dsx
+oot3dhax_installer.smdh
+oot3dhax_installer.elf
